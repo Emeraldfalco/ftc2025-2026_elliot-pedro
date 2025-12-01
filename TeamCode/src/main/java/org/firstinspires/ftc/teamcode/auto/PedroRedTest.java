@@ -21,6 +21,7 @@ public class PedroRedTest extends OpMode {
     private Character leftBall = 'P';
     private Character midBall = 'G';
     private Character rightBall = 'P';
+    private String motif = "unknown";
     private AprilTag april;
     private Follower follower;
     private Shooter shooter;
@@ -62,8 +63,9 @@ public class PedroRedTest extends OpMode {
                 follower.turnToDegrees(motifPose.getHeading());
                 april.updateTagInfo();
                 TagType motifTagType = april.getTagInfo(TagType.meaning, 0);
-                String motif = motifTagType.name(); // My extreme intelligence in making the apriltag class
+                motif = motifTagType.name(); // My extreme intelligence in making the apriltag class
                 follower.turnToDegrees(scorePose.getHeading());
+                if(motif.equals("UNKNOWN")) motif = "PGP"; // If the camera reads motif as unknown pass in default pgp
                 shooter.shoot(motif, leftBall, midBall, rightBall);
                 setPathState(1); // Ya we're done you can go to the next path now
                 break;
@@ -83,10 +85,12 @@ public class PedroRedTest extends OpMode {
         autonomousPathUpdate();
 
         // Feedback to Driver Hub for debugging
-        telemetry.addData("path state", pathStep);
-        telemetry.addData("x", follower.getPose().getX());
-        telemetry.addData("y", follower.getPose().getY());
-        telemetry.addData("heading", follower.getPose().getHeading());
+        telemetry.addData("Path Step", pathStep);
+        telemetry.addData("Bot X", follower.getPose().getX());
+        telemetry.addData("Bot Y", follower.getPose().getY());
+        telemetry.addData("Bot Heading", follower.getPose().getHeading());
+        telemetry.addData("Loaded Balls L/M/R", "%c, %c, %c", leftBall, midBall, rightBall);
+        telemetry.addData("Motif", motif);
         telemetry.update();
     }
 
