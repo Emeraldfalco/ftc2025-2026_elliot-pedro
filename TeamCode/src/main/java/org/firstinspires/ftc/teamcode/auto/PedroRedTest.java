@@ -22,6 +22,7 @@ public class PedroRedTest extends OpMode {
     private Character midBall = 'G';
     private Character rightBall = 'P';
     private String motif = "unknown";
+    private String telemetryStatus = "";
     private AprilTag april;
     private Follower follower;
     private Shooter shooter;
@@ -31,7 +32,7 @@ public class PedroRedTest extends OpMode {
 
     private final Pose startPose = new Pose(109, 135, Math.toRadians(270)); // Start Pose - Bot at the corner of the red goal with it facing out into the field (feeder against the wall)
     private final Pose scorePose = new Pose(96, 96, Math.toRadians(45)); // Scoring pose - red goal
-    private final Pose motifPose = new Pose(96, 96, Math.toRadians(120)); // Scoring pose - red goal
+    private final Pose motifPose = new Pose(96, 96, Math.toRadians(120)); // Pose to Read Motif Pattern - from scoring pose
 
     // These ball poses have the bot facing backwards (Intake facing balls)
     private final Pose ppgPose = new Pose(96, 84, Math.toRadians(180)); // Highest (First Set) of Artifacts - closest to red goal
@@ -42,6 +43,7 @@ public class PedroRedTest extends OpMode {
     private PathChain grabPpg, scorePpg;
 
     public void buildPaths() {
+        telemetryStatus = "Building paths...";
         scorePreload = new Path(new BezierLine(startPose, scorePose)); // Hey pedro make a line from our start pose to our score pose
         scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading()); // Hey pedro make our heading change too but make it complicated
 
@@ -59,13 +61,21 @@ public class PedroRedTest extends OpMode {
     public void autonomousPathUpdate() {
         switch(pathStep) { // If we're on step _ were going to do this (Main nav + shooting loop basically)
             case 0:
+                telemetryStatus = "Running path step 0";
+                telemetryStatus = "Navigating to Score Preload";
                 follower.followPath(scorePreload); // PEDRO PEDRO GO FOLLOW THIS PATH!!!1!1!1!
+                telemetryStatus = "Turning to motif pose";
                 follower.turnToDegrees(motifPose.getHeading());
+                telemetryStatus = "Reading camera";
                 april.updateTagInfo();
                 TagType motifTagType = april.getTagInfo(TagType.meaning, 0);
                 motif = motifTagType.name(); // My extreme intelligence in making the apriltag class
                 follower.turnToDegrees(scorePose.getHeading());
-                if(motif.equals("UNKNOWN")) motif = "PGP"; // If the camera reads motif as unknown pass in default pgp
+                if(motif.equals("UNKNOWN")) {
+                    motif = "PGP"; // If the camera reads motif as unknown pass in default pgp
+                    telemetryStatus = "Camera read failed";
+                }
+                telemetryStatus = "Shooting preload";
                 shooter.shoot(motif, leftBall, midBall, rightBall);
                 setPathState(1); // Ya we're done you can go to the next path now
                 break;
@@ -75,6 +85,29 @@ public class PedroRedTest extends OpMode {
     public void setPathState(int pState) { // PEDRO PEDRO change what path we're on
         pathStep = pState;
         pathTimer.resetTimer();
+    }
+
+
+
+    @Override
+    public void init() {
+        pathTimer = new Timer();
+        opmodeTimer = new Timer();
+        opmodeTimer.resetTimer();
+
+        shooter = new Shooter(hardwareMap, telemetry);
+        april = new AprilTag(hardwareMap);
+
+        follower = Constants.createFollower(hardwareMap);
+        buildPaths();
+        follower.setStartingPose(startPose);
+
+    }
+
+    @Override
+    public void start() {
+        opmodeTimer.resetTimer();
+        setPathState(0);
     }
 
     @Override
@@ -91,27 +124,9 @@ public class PedroRedTest extends OpMode {
         telemetry.addData("Bot Heading", follower.getPose().getHeading());
         telemetry.addData("Loaded Balls L/M/R", "%c, %c, %c", leftBall, midBall, rightBall);
         telemetry.addData("Motif", motif);
+        telemetry.addLine();
+        telemetry.addData("Auto Status", telemetryStatus);
+        telemetry.addLine();
         telemetry.update();
-    }
-
-    @Override
-    public void init() {
-        pathTimer = new Timer();
-        opmodeTimer = new Timer();
-        opmodeTimer.resetTimer();
-
-        shooter = new Shooter(hardwareMap);
-        april = new AprilTag(hardwareMap);
-
-        follower = Constants.createFollower(hardwareMap);
-        buildPaths();
-        follower.setStartingPose(startPose);
-
-    }
-
-    @Override
-    public void start() {
-        opmodeTimer.resetTimer();
-        setPathState(0);
     }
 }
