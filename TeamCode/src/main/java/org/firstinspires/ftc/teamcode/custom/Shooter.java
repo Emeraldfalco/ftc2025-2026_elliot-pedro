@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.custom;
 
+import com.pedropathing.follower.Follower;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -8,7 +9,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.custom.TagType;
+import org.firstinspires.ftc.teamcode.custom.Wait;
 
 import java.util.Arrays;
 
@@ -19,18 +20,20 @@ public class Shooter {
     CheeksKicker cheeks;
     String telemetryStatus = "";
     Telemetry telemetry;
+    Follower follower;
 
     double p = 300;
     double i = 1;
     double d = 4;
     double f = 10;
 
-    double flyWheelTarget = 1350;
+    double flyWheelTarget = 1200;
 
-    public Shooter(HardwareMap hwmap, Telemetry telemetry) {
+    public Shooter(HardwareMap hwmap, Telemetry telemetry, Follower follower) {
         time = new ElapsedTime();
         cheeks = new CheeksKicker(hwmap, time);
         this.telemetry = telemetry;
+        this.follower = follower;
 
         flywheel = hwmap.get(DcMotorEx.class, "flywheel");
         flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -84,7 +87,7 @@ public class Shooter {
         spinUp();
 
         boolean firstMotif = (pattern[0] == midBall);
-        telemetryStatus = "Mid ball shot matched first motif: " + firstMotif;
+        telemetryStatus = "Mid ball shot - matched first motif: " + firstMotif;
         updateTelemetry();
 
         shootBall();
@@ -141,31 +144,41 @@ public class Shooter {
     }
 
     private void shootBall() {
-        telemetryStatus = "Waiting for target velocity...";
+        follower.update(); // Update pedro pathing so the bot doesn't drift
+        telemetryStatus = "Waiting for target velocity... - " + flyWheelTarget;
         updateTelemetry();
         while (!flywheelReachedTargetVelocity()) {
             try { Thread.sleep(10); } catch (Exception ignored) {}
         }
-        telemetryStatus = "Waiting one second for velocity stabilization";
+        telemetryStatus = "Waiting one second for velocity stabilization - " + flyWheelTarget;
         updateTelemetry();
-        waitSeconds(1);
-        telemetryStatus = "Extend kicker";
+        while(!Wait.wait(1.0, time.time()));
+        telemetryStatus = "Extend kicker - " + flyWheelTarget;
         updateTelemetry();
-        cheeks.kickerExtend();
-        waitSeconds(2);
-        telemetryStatus = "Retract kicker";
-        updateTelemetry();
-        cheeks.kickerRetract();
+        for(int i = 0; i < 5; i++) {
+            cheeks.kickerExtend();
+            Wait.wait(0.5, time.time());
+            if (cheeks.kicker.getPosition() < cheeks.kickerMax) {
+                telemetryStatus = "Retract kicker - trying again: " + i;
+                updateTelemetry();
+            } else {
+                telemetryStatus = "Retract kicker";
+                cheeks.kickerRetract();
+                updateTelemetry();
+                break;
+            }
+        }
+        while(!Wait.wait(0.5, time.time()));
         telemetryStatus = "Finished shooting single ball";
         updateTelemetry();
     }
 
-    private void waitSeconds(double seconds) { // Woah look at this a fancy wait thing
-        double start = time.seconds();
-        while (time.seconds() - start < seconds) {
-            try { Thread.sleep(10); } catch (Exception ignored) {}
-        }
-    }
+//    private void waitSeconds(double seconds) { // Woah look at this a fancy wait thing
+//        double start = time.seconds();
+//        while (time.seconds() - start < seconds) {
+//            try { Thread.sleep(10); } catch (Exception ignored) {}
+//        }
+//    }
 
     private void updateTelemetry() {
         telemetry.addData("Shooter Status: ", telemetryStatus);

@@ -17,7 +17,7 @@ public class CheeksKicker {
     boolean op3 = false;
     boolean op4 = false;
     final double kickerMin = 0.85;
-    final double kickerMax = 0.2;
+    final double kickerMax = 0.2; // CHANGRDDDDDDD
     final double leftMin = 0;
     final double leftMax = 0.35;
     final double rightMin = 0.2;

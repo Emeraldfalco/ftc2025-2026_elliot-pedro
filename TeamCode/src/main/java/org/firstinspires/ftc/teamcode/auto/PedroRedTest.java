@@ -13,6 +13,9 @@ import org.firstinspires.ftc.teamcode.custom.Shooter;
 import org.firstinspires.ftc.teamcode.custom.TagType;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.custom.AprilTag;
+import org.firstinspires.ftc.teamcode.custom.Wait;
+
+import java.util.Locale;
 
 @Autonomous
 public class PedroRedTest extends OpMode {
@@ -60,24 +63,62 @@ public class PedroRedTest extends OpMode {
 
     public void autonomousPathUpdate() {
         switch(pathStep) { // If we're on step _ were going to do this (Main nav + shooting loop basically)
+            case -1:
+                telemetryStatus = "Finished Auto";
             case 0:
-                telemetryStatus = "Running path step 0";
-                telemetryStatus = "Navigating to Score Preload";
-                follower.followPath(scorePreload); // PEDRO PEDRO GO FOLLOW THIS PATH!!!1!1!1!
-                telemetryStatus = "Turning to motif pose";
-                follower.turnToDegrees(motifPose.getHeading());
-                telemetryStatus = "Reading camera";
-                april.updateTagInfo();
-                TagType motifTagType = april.getTagInfo(TagType.meaning, 0);
-                motif = motifTagType.name(); // My extreme intelligence in making the apriltag class
-                follower.turnToDegrees(scorePose.getHeading());
-                if(motif.equals("UNKNOWN")) {
-                    motif = "PGP"; // If the camera reads motif as unknown pass in default pgp
-                    telemetryStatus = "Camera read failed";
+                if(!follower.isBusy()) {
+                    telemetryStatus = "Navigating to Score Preload";
+                    follower.followPath(scorePreload); // PEDRO PEDRO GO FOLLOW THIS PATH!!!1!1!1!
+                    setPathState(1); // Ya we're done you can go to the next path now
                 }
-                telemetryStatus = "Shooting preload";
-                shooter.shoot(motif, leftBall, midBall, rightBall);
-                setPathState(1); // Ya we're done you can go to the next path now
+                break;
+            case 1:
+                if(!follower.isBusy()) {
+                    double botHeading = follower.getHeading();
+                    double motifHeading = motifPose.getHeading();
+
+                    telemetryStatus = String.format(Locale.US, "Turning to motif pose [%f, %f]", botHeading, motifHeading);
+                    follower.turnTo(motifHeading);
+                    setPathState(2);
+                }
+                break;
+            case 2:
+                if(!follower.isBusy()) {
+                    telemetryStatus = "Reading camera";
+                    Wait.wait(0.5, time);
+                    TagType motifTagType = null;
+                    for (int i = 0; i < 10; i++) {
+                        april.updateTagInfo();
+                        if (april.getTagInfo(TagType.meaning, 0) != TagType.UNKNOWN) {
+                            motifTagType = april.getTagInfo(TagType.meaning, 0);
+                            break;
+                        }
+                    }
+
+                    if(motifTagType == null) motifTagType = TagType.UNKNOWN;
+                    motif = motifTagType.name(); // My extreme intelligence in making the apriltag class
+                    setPathState(3);
+                }
+                break;
+            case 3:
+                if(!follower.isBusy()) {
+                    telemetryStatus = "Turning back to scoring pose";
+                    follower.turnTo(scorePose.getHeading());
+                    setPathState(4);
+                }
+                break;
+            case 4:
+                if(!follower.isBusy()) {
+                    if (motif.equals("UNKNOWN")) {
+                        motif = "PGP"; // If the camera reads motif as unknown pass in default pgp
+                        telemetryStatus = "Camera read failed - Shooting Preload";
+                    } else {
+                        telemetryStatus = "Shooting preload";
+                    }
+
+                    shooter.shoot(motif, leftBall, midBall, rightBall);
+                    setPathState(-1);
+                }
                 break;
         }
     }
@@ -95,7 +136,7 @@ public class PedroRedTest extends OpMode {
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
 
-        shooter = new Shooter(hardwareMap, telemetry);
+        shooter = new Shooter(hardwareMap, telemetry, follower);
         april = new AprilTag(hardwareMap);
 
         follower = Constants.createFollower(hardwareMap);
