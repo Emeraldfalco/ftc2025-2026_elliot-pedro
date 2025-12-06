@@ -65,6 +65,7 @@ public class PedroRedTest extends OpMode {
         switch(pathStep) { // If we're on step _ were going to do this (Main nav + shooting loop basically)
             case -1:
                 telemetryStatus = "Finished Auto";
+                break;
             case 0:
                 if(!follower.isBusy()) {
                     telemetryStatus = "Navigating to Score Preload";
@@ -87,18 +88,13 @@ public class PedroRedTest extends OpMode {
                     telemetryStatus = "Reading camera";
                     Wait.wait(0.5, time);
                     TagType motifTagType = null;
-                    for (int i = 0; i < 10; i++) {
-                        april.updateTagInfo();
-                        if (april.getTagInfo(TagType.meaning, 0) != TagType.UNKNOWN) {
-                            motifTagType = april.getTagInfo(TagType.meaning, 0);
-                            break;
-                        }
-                    }
-
+                    april.updateTagInfo();
+                    motifTagType = april.getTagInfo(TagType.meaning, 21);
                     if(motifTagType == null) motifTagType = TagType.UNKNOWN;
                     motif = motifTagType.name(); // My extreme intelligence in making the apriltag class
                     setPathState(3);
                 }
+                april.updateTagInfo();
                 break;
             case 3:
                 if(!follower.isBusy()) {
@@ -108,17 +104,15 @@ public class PedroRedTest extends OpMode {
                 }
                 break;
             case 4:
-                if(!follower.isBusy()) {
+                if(!shooter.shoot(motif, leftBall, midBall, rightBall)) {
                     if (motif.equals("UNKNOWN")) {
                         motif = "PGP"; // If the camera reads motif as unknown pass in default pgp
                         telemetryStatus = "Camera read failed - Shooting Preload";
                     } else {
                         telemetryStatus = "Shooting preload";
                     }
-
-                    shooter.shoot(motif, leftBall, midBall, rightBall);
                     setPathState(-1);
-                }
+                } //todo seperate shooter.java into two methods that 1. calculates the order of the shoots and 2. Shoots the ball in x order
                 break;
         }
     }

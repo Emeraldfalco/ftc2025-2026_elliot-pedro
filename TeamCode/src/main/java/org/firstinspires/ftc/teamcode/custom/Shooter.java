@@ -9,7 +9,6 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.custom.Wait;
 
 import java.util.Arrays;
 
@@ -28,6 +27,9 @@ public class Shooter {
     double f = 10;
 
     double flyWheelTarget = 1200;
+
+    int shootState = 1;
+    boolean shootDone = false;
 
     public Shooter(HardwareMap hwmap, Telemetry telemetry, Follower follower) {
         time = new ElapsedTime();
@@ -73,7 +75,7 @@ public class Shooter {
 
 
     // Oh no its the big complicated function :((((
-    public void shoot(String motif, char armLeft, char active, char armRight) {
+    public boolean shoot(String motif, char armLeft, char active, char armRight) {
         char[] pattern = motif.toCharArray();
         telemetryStatus = "Shooting pattern with motif " + Arrays.toString(pattern);
         updateTelemetry();
@@ -84,14 +86,17 @@ public class Shooter {
         telemetryStatus = "Loaded balls L/M/R: " + leftBall + " / " + midBall + " / " + rightBall;
         updateTelemetry();
 
+
         spinUp();
 
         boolean firstMotif = (pattern[0] == midBall);
         telemetryStatus = "Mid ball shot - matched first motif: " + firstMotif;
         updateTelemetry();
 
-        shootBall();
         telemetryStatus = "Shooting ball...";
+
+        if (!shootBall()) {
+        }
         updateTelemetry();
         midBall = ' ';
 
@@ -117,7 +122,8 @@ public class Shooter {
 
         telemetryStatus = "Shooting ball...";
         updateTelemetry();
-        shootBall();
+        if (!shootBall()) {
+        }
 
         if (leftBall != ' ') {
             telemetryStatus = "Letting down left ball";
@@ -137,40 +143,38 @@ public class Shooter {
 
         telemetryStatus = "Shooting ball...";
         updateTelemetry();
-        shootBall();
+        if (!shootBall()) {
+        }
         spinDown();
         telemetryStatus = "Finished shooting load";
         updateTelemetry();
+        return true;
     }
 
-    private void shootBall() {
-        follower.update(); // Update pedro pathing so the bot doesn't drift
-        telemetryStatus = "Waiting for target velocity... - " + flyWheelTarget;
-        updateTelemetry();
-        while (!flywheelReachedTargetVelocity()) {
-            try { Thread.sleep(10); } catch (Exception ignored) {}
-        }
-        telemetryStatus = "Waiting one second for velocity stabilization - " + flyWheelTarget;
-        updateTelemetry();
-        while(!Wait.wait(1.0, time.time()));
-        telemetryStatus = "Extend kicker - " + flyWheelTarget;
-        updateTelemetry();
-        for(int i = 0; i < 5; i++) {
-            cheeks.kickerExtend();
-            Wait.wait(0.5, time.time());
-            if (cheeks.kicker.getPosition() < cheeks.kickerMax) {
-                telemetryStatus = "Retract kicker - trying again: " + i;
-                updateTelemetry();
-            } else {
-                telemetryStatus = "Retract kicker";
-                cheeks.kickerRetract();
-                updateTelemetry();
+    public boolean shootBall() {
+        switch (shootState){
+            case 1:
+                cheeks.kickerExtend();
+                shootDone = Wait.wait(2, time.seconds());
+                if (shootDone){
+                    shootDone = false;
+                    shootState = 2;
+                }
                 break;
-            }
+            case 2:
+                cheeks.kickerRetract();
+                shootDone = false;
+                shootDone = Wait.wait(2, time.seconds());
+                if (shootDone){
+                    shootDone = false;
+                    shootState = 1;
+//                    return true;
+                }
+                break;
+            default:
+                return false;
         }
-        while(!Wait.wait(0.5, time.time()));
-        telemetryStatus = "Finished shooting single ball";
-        updateTelemetry();
+        return false;
     }
 
 //    private void waitSeconds(double seconds) { // Woah look at this a fancy wait thing

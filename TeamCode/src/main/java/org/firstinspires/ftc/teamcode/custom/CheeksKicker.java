@@ -167,6 +167,10 @@ public class CheeksKicker {
                 op2 = rightUp();
                 done = true;
                 break;
+            case 4:
+                op1 = leftDown();
+                op2 = rightUp();
+                done = true;
             default:
                 op1 = leftUp();
                 op2 = rightUp();
