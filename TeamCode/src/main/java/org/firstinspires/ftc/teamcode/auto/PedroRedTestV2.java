@@ -13,9 +13,10 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.custom.CheeksKicker;
 import org.firstinspires.ftc.teamcode.custom.Shooterv2;
 import org.firstinspires.ftc.teamcode.custom.TagType;
-import org.firstinspires.ftc.teamcode.custom.Wait;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.custom.AprilTag;
+import org.firstinspires.ftc.teamcode.custom.Intake;
+import org.firstinspires.ftc.teamcode.custom.Loader;
 
 @Autonomous
 public class PedroRedTestV2 extends OpMode {
@@ -28,27 +29,33 @@ public class PedroRedTestV2 extends OpMode {
     public String shooterStatus = "";
     public String queryStatus = "";
     private boolean doneShooting = false;
+    private boolean doneLoading = false;
     private boolean doneDecidingArm = false;
     private AprilTag april;
     private Follower follower;
     private CheeksKicker cheeks;
     private Shooterv2 shooter;
+    private Intake intake;
+    private Loader loader;
     private Timer pathTimer, actionTimer, opmodeTimer;
     ElapsedTime time = null;
 
     private int pathStep; // Which path we're on - this will start at zero (score preloaded balls) then go to one once we go to the next set
 
     private final Pose startPose = new Pose(109, 135, Math.toRadians(270)); // Start Pose - Bot at the corner of the red goal with it facing out into the field (feeder against the wall)
-    private final Pose scorePose = new Pose(96, 96, Math.toRadians(45)); // Scoring pose - red goal
+    private final Pose scorePose = new Pose(96, 96, Math.toRadians(50)); // Scoring pose - red goal
     private final Pose motifPose = new Pose(96, 96, Math.toRadians(120)); // Pose to Read Motif Pattern - from scoring pose
 
     // These ball poses have the bot facing backwards (Intake facing balls)
     private final Pose ppgPose = new Pose(96, 84, Math.toRadians(180)); // Highest (First Set) of Artifacts - closest to red goal
+    private final Pose ppgRam = new Pose(130, 84, Math.toRadians(180));
     private final Pose pgpPose = new Pose(96, 60, Math.toRadians(180)); // Middle (Second Set) of Artifacts - halfway
+    private final Pose pgpRam = new Pose(130, 60, Math.toRadians(180));
     private final Pose gppPose = new Pose(96, 36, Math.toRadians(180)); // Lowest (Third Set) of Artifacts - furthest from red goal
+    private final Pose gppRam = new Pose(130, 36, Math.toRadians(180));
 
     private Path turnToMotif;
-    private PathChain grabPpg, scorePpg;
+    private PathChain grabPpg, scorePpg, grabPgp, scorePgp, grabGpp, scoreGpp, ramPpg, ramPgp, ramGpp;
 
     public void buildPaths() {
         autoStatus = "Building paths...";
@@ -58,11 +65,48 @@ public class PedroRedTestV2 extends OpMode {
         grabPpg = follower.pathBuilder() // Build this line:
                 .addPath(new BezierLine(scorePose, ppgPose)) // From score pose to ppg pose
                 .setLinearHeadingInterpolation(scorePose.getHeading(), ppgPose.getHeading()) // From score heading to ppg heading
-                .build(); // Hey pedro im finished build pls
+                .build();
 
         scorePpg = follower.pathBuilder() // Go from grabbing ppg to the score pose
                 .addPath(new BezierLine(ppgPose, scorePose))
                 .setLinearHeadingInterpolation(ppgPose.getHeading(), scorePose.getHeading())
+                .build();
+
+        grabPgp = follower.pathBuilder() // Build this line:
+                .addPath(new BezierLine(scorePose, pgpPose)) // From score pose to pgp pose
+                .setLinearHeadingInterpolation(scorePose.getHeading(), pgpPose.getHeading()) // From score heading to pgp heading
+                .build();
+
+        scorePgp = follower.pathBuilder() // Go from grabbing pgp to the score pose
+                .addPath(new BezierLine(pgpPose, scorePose))
+                .setLinearHeadingInterpolation(pgpPose.getHeading(), scorePose.getHeading())
+                .build();
+
+        grabGpp = follower.pathBuilder() // Build this line:
+                .addPath(new BezierLine(scorePose, gppPose)) // From score pose to gpp pose
+                .setLinearHeadingInterpolation(scorePose.getHeading(), gppPose.getHeading()) // From score heading to gpp heading
+                .build();
+
+        scoreGpp = follower.pathBuilder() // Go from grabbing gpp to the score pose
+                .addPath(new BezierLine(gppPose, scorePose))
+                .setLinearHeadingInterpolation(gppPose.getHeading(), scorePose.getHeading())
+                .build();
+
+
+
+        ramPpg = follower.pathBuilder()
+                .addPath(new BezierLine(ppgPose, ppgRam))
+                .setLinearHeadingInterpolation(ppgPose.getHeading(), ppgRam.getHeading())
+                .build();
+
+        ramPgp = follower.pathBuilder()
+                .addPath(new BezierLine(pgpPose, pgpRam))
+                .setLinearHeadingInterpolation(pgpPose.getHeading(), pgpRam.getHeading())
+                .build();
+
+        ramGpp = follower.pathBuilder()
+                .addPath(new BezierLine(gppPose, gppRam))
+                .setLinearHeadingInterpolation(gppPose.getHeading(), gppRam.getHeading())
                 .build();
     }
 
@@ -216,6 +260,58 @@ public class PedroRedTestV2 extends OpMode {
                 doneShooting = shooter.shootBall();
                 if (doneShooting) {
                     doneShooting = false;
+                    setPathState(45);
+                }
+                break;
+            case 45:
+                if (!follower.isBusy()) {
+                    autoStatus = "[nav] Going to grabPPG pose";
+                    follower.followPath(grabPpg);
+                    setPathState(46);
+                }
+                break;
+
+            case 46:
+                if(!follower.isBusy()) {
+                    if(loader.intake()) {
+                        setPathState(-1);
+                    } else {
+//                        follower.followPath(ramPpg);
+                    }
+                }
+                break;
+            case 50:
+                if(!follower.isBusy()) {
+                    autoStatus = "[nav] Going to score pose";
+                    follower.followPath(scorePpg);
+                    setPathState(55);
+                }
+                break;
+            case 55:
+                if(!follower.isBusy()) {
+                    autoStatus = "[nav] Going to grabPGP pose";
+                    follower.followPath(grabPgp);
+                    setPathState(60);
+                }
+                break;
+            case 60:
+                if(!follower.isBusy()) {
+                    autoStatus = "[nav] Going to score pose";
+                    follower.followPath(scorePgp);
+                    setPathState(65);
+                }
+                break;
+            case 65:
+                if(!follower.isBusy()) {
+                    autoStatus = "[nav] Going to grabGPP pose";
+                    follower.followPath(grabGpp);
+                    setPathState(70);
+                }
+                break;
+            case 70:
+                if(!follower.isBusy()) {
+                    autoStatus = "[nav] Going to score pose";
+                    follower.followPath(scoreGpp);
                     setPathState(-1);
                 }
                 break;
@@ -229,16 +325,22 @@ public class PedroRedTestV2 extends OpMode {
     }
 
     public static char[] query(String motif, char armLeft, char active, char armRight) {
+        /*
+        This method takes in the motif pattern and the balls in the left, right, and middle chambers
+        of the bot, and returns the optimal shooting pattern if we want the highest chance of
+        satisfying the pattern.
+        */
         char[] pattern = motif.toCharArray();
 
         char leftBall = Character.toUpperCase(armLeft);
         char midBall  = Character.toUpperCase(active);
         char rightBall = Character.toUpperCase(armRight);
 
-        char[] order = new char[3];
-        order[0] = midBall;
+        char[] order = new char[3]; // Order is a array of three characters
+        order[0] = midBall; // First ball in the order is the ball in the middle
 
         boolean firstMotif = (pattern[0] == midBall); // is the middle ball the first on the motif?
+        // Set next ball based on if the first motif was satisfied
         char next = firstMotif ? pattern[1] : pattern[0];
 
         if (leftBall == next) {
@@ -252,10 +354,10 @@ public class PedroRedTestV2 extends OpMode {
             leftBall = ' ';
         }
 
-        if (leftBall != ' ') {
+        if (leftBall != ' ') { // If we used the left ball, set it as next in order
             order[2] = leftBall;
             leftBall = ' ';
-        } else if (rightBall != ' ') {
+        } else if (rightBall != ' ') { // If we used the right ball, set it as next in order
             order[2] = rightBall;
             rightBall = ' ';
         } else {
@@ -263,7 +365,7 @@ public class PedroRedTestV2 extends OpMode {
             // This should never happen but...?
         }
 
-        return order;
+        return order; // Return final order array
     }
 
     @Override
@@ -276,6 +378,8 @@ public class PedroRedTestV2 extends OpMode {
         shooter = new Shooterv2(hardwareMap);
         cheeks = new CheeksKicker(hardwareMap, time);
         april = new AprilTag(hardwareMap);
+        intake = new Intake(hardwareMap, time);
+        loader = new Loader(hardwareMap);
 
         follower = Constants.createFollower(hardwareMap);
         buildPaths();
@@ -285,7 +389,7 @@ public class PedroRedTestV2 extends OpMode {
     @Override
     public void start() {
         opmodeTimer.resetTimer();
-        setPathState(1);
+        setPathState(46);
     }
 
     @Override
@@ -305,6 +409,12 @@ public class PedroRedTestV2 extends OpMode {
         telemetry.addData("Auto Status", autoStatus);
         telemetry.addData("Shooter Status", shooterStatus + ", - Step: " + shooter.getStep());
         telemetry.addData("Query Status", queryStatus);
+        telemetry.addData("Servo Debug - Kicker", cheeks.kicker.getPosition());
+        telemetry.addData("Servo Debug - Left Arm", cheeks.leftCheek.getPosition());
+        telemetry.addData("Servo Debug - Right Arm", cheeks.rightCheek.getPosition());
+        telemetry.addData("Distance Debug - Middle", loader.getDistance());
+        telemetry.addData("Balls Loader L/M/R", "%c, %c, %c", loader.left, loader.middle, loader.right);
+        telemetry.addData("Loader ball detected", loader.ballPreviouslyDetected);
         telemetry.update();
     }
 }

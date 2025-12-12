@@ -6,9 +6,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class CheeksKicker {
 
 
-    Servo kicker = null;
-    Servo leftCheek = null;
-    Servo rightCheek = null;
+    public Servo kicker = null;
+    public Servo leftCheek = null;
+    public Servo rightCheek = null;
     HardwareMap hwMap = null;
 
     boolean op1 = false;

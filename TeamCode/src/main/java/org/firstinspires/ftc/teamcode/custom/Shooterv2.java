@@ -69,6 +69,9 @@ public class Shooterv2 {
                 doneWaiting = Wait.wait(2, time.seconds());
                 if (doneWaiting){ // If we waited 2 seconds
                     doneWaiting = false;
+//                    if(cheeks.kicker.getPosition() != cheeks.kickerMax) {
+//                        //todo implement where if position is not maxed after a while it will self correct
+//                    }
                     cheeks.kickerRetract();
                     shootState = 4;
                 }
