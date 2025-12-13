@@ -20,8 +20,8 @@ public class CheeksKicker {
     final double kickerMax = 0.25; // CHANGRDDDDDDD
     final double leftMin = 0;
     final double leftMax = 0.35;
-    final double rightMin = 0.2;
-    final double rightMax = 0.5;
+    final double rightMin = 0.05;
+    final double rightMax = 0.35;
 
     private double extendStart = 0;
     private double extendEnd = 0;
