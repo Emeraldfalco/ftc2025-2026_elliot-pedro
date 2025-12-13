@@ -1,9 +1,6 @@
 package org.firstinspires.ftc.teamcode.custom;
 
 import androidx.annotation.NonNull;
-
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -65,48 +62,6 @@ public class Flywheel {
         } else {
             return false;
         }
-    }
-
-    public class SpinUp implements Action {
-        private boolean initialized = false;
-        @Override
-        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-            if (!initialized){
-                initialized = true;
-                setVelocity(1350);
-            }
-
-            if (flywheelMot.getVelocity() <= 1380 && flywheelMot.getVelocity() >= 1320){
-                return false;
-            } else {
-                return true;
-            }
-        }
-    }
-
-    public Action spinUp () {
-        return new SpinUp();
-    }
-
-    public class SpinDown implements Action {
-        private boolean initialized = false;
-        @Override
-        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-            if (!initialized){
-                initialized = true;
-                setVelocity(0);
-            }
-
-            if (flywheelMot.getVelocity() <= 50){
-                return false;
-            } else {
-                return true;
-            }
-        }
-    }
-
-    public Action spinDown () {
-        return new SpinDown();
     }
 
 
