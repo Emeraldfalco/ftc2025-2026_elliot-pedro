@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.Tele;
 
 
-import com.pedropathing.follower.Follower;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -16,7 +15,6 @@ import org.firstinspires.ftc.teamcode.custom.CheeksKicker;
 import org.firstinspires.ftc.teamcode.custom.Flywheel;
 import org.firstinspires.ftc.teamcode.custom.Intake;
 import org.firstinspires.ftc.teamcode.custom.MecanumDrive;
-import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 
 @TeleOp
@@ -60,17 +58,12 @@ public class TeleOpV3 extends OpMode {
     boolean lastAState = false;
     boolean useAutoFlywheelSpeed = false;
     double targetingRX = 0.0;
-    private Follower follower = null;
-    double slowModeMultiplier = 0;
-
-    int state = 3;
     @Override
     public void init() {
-        //drive = new MecanumDrive(hardwareMap, new Pose2D(DistanceUnit.INCH,0,0, AngleUnit.RADIANS,0));
+        drive = new MecanumDrive(hardwareMap, new Pose2D(DistanceUnit.INCH,0,0, AngleUnit.RADIANS,0));
         flywheel = new Flywheel(hardwareMap);
         intake = new Intake(hardwareMap, new ElapsedTime());
         cheeksKicker = new CheeksKicker(hardwareMap, new ElapsedTime());
-        follower = Constants.createFollower(hardwareMap);
 
 
     }
@@ -80,7 +73,6 @@ public class TeleOpV3 extends OpMode {
         cheeksKicker.kickerRetract();
         cheeksKicker.leftUp();
         cheeksKicker.rightUp();
-        follower.startTeleOpDrive();
     }
 
     @Override
@@ -102,17 +94,8 @@ public class TeleOpV3 extends OpMode {
         boolean leftDpad = gamepad1.dpad_left;
         boolean rightDpad = gamepad1.dpad_right;
 
-
         //set drive powers
-
-        follower.update();
-        slowModeMultiplier = Math.max(Math.abs(1-leftTrigger), 0.2);
-        follower.setTeleOpDrive(
-                gamepad1.left_stick_y * slowModeMultiplier,
-                -gamepad1.left_stick_x * slowModeMultiplier,
-                -gamepad1.right_stick_x * slowModeMultiplier,
-                true // Robot Centric
-        );
+        drive.setDrivePowers(lx, ly, rx);
 
         //intake control (x = intake, y = reject)
         //if no buttons are pressed do not spin intake
@@ -144,7 +127,7 @@ public class TeleOpV3 extends OpMode {
 
 
         //increment state by one and cycle intake on left bump press
-
+        /*
         if (leftDpad && !lastLeftDpadState && state < 3) {
             state++;
             cheeksKicker.intakeState(state);
@@ -157,7 +140,7 @@ public class TeleOpV3 extends OpMode {
             cheeksKicker.launchState(state);
         }
         lastRightDpadState = rightDpad;
-
+        */
 
         cheeksKicker.update(gamepad1.dpad_left,gamepad1.dpad_right);
         if (b){
@@ -223,8 +206,6 @@ public class TeleOpV3 extends OpMode {
         }
         lastLeftStickPressState = leftStickPress;
 
-        rx = -gamepad1.right_stick_x;
-
 
         //4.convert the right stick input on the joystick to be a calculated input relative to the difference in headings of the
         //current heading of the robot and the target heading of the basket
@@ -281,7 +262,6 @@ public class TeleOpV3 extends OpMode {
         telemetry.addData("is target blue?", isShotTargetBlue);
         telemetry.addData("flywheel velocity", targetFlywheelVel);
         telemetry.update();
-
 
 /*        TelemetryPacket heading = new TelemetryPacket();
 

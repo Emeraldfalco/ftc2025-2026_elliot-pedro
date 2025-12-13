@@ -111,17 +111,19 @@ public class PedroRedTestV2 extends OpMode {
     }
 
     public void autonomousPathUpdate() {
-        switch(pathStep) { // If we're on step _ do this
-            case -1: // If the step is -1
+        switch(pathStep) { // If we're on step _ were going to do this (Main nav + shooting loop basically)
+            // This will increment by 5 so more can be added later
+            //todo implement timer-based path fallback
+            case -1:
                 autoStatus = "Auto finished";
                 shooter.spinDown();
                 break;
 
             case 1: // Navigate to motif pose
-                if(!follower.isBusy()) { // If the follower is not busy
+                if(!follower.isBusy()) {
                     autoStatus = "[nav] Going to motif pose";
-                    follower.followPath(turnToMotif); // Follow this path (sets isBusy to true)
-                    setPathState(5); // Set the path state to 5.
+                    follower.followPath(turnToMotif);
+                    setPathState(5);
                 }
                 break;
 
@@ -258,7 +260,7 @@ public class PedroRedTestV2 extends OpMode {
                 doneShooting = shooter.shootBall();
                 if (doneShooting) {
                     doneShooting = false;
-                    setPathState(-1);
+                    setPathState(45);
                 }
                 break;
             case 45:
@@ -289,7 +291,7 @@ public class PedroRedTestV2 extends OpMode {
                 if(!follower.isBusy()) {
                     autoStatus = "[nav] Going to grabPGP pose";
                     follower.followPath(grabPgp);
-                    setPathState(60); 
+                    setPathState(60);
                 }
                 break;
             case 60:
@@ -387,7 +389,7 @@ public class PedroRedTestV2 extends OpMode {
     @Override
     public void start() {
         opmodeTimer.resetTimer();
-        setPathState(1);
+        setPathState(46);
     }
 
     @Override
@@ -413,7 +415,6 @@ public class PedroRedTestV2 extends OpMode {
         telemetry.addData("Distance Debug - Middle", loader.getDistance());
         telemetry.addData("Balls Loader L/M/R", "%c, %c, %c", loader.left, loader.middle, loader.right);
         telemetry.addData("Loader ball detected", loader.ballPreviouslyDetected);
-        telemetry.addData("Loader step", loader.loaderStep);
         telemetry.update();
     }
 }
