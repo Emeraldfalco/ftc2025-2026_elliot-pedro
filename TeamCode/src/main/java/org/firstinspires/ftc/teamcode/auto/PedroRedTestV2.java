@@ -267,7 +267,7 @@ public class PedroRedTestV2 extends OpMode {
                 if (!follower.isBusy()) {
                     autoStatus = "[nav] Going to grabPPG pose";
                     follower.followPath(grabPpg);
-                    setPathState(46);
+                    setPathState(-1);
                 }
                 break;
 
@@ -389,7 +389,7 @@ public class PedroRedTestV2 extends OpMode {
     @Override
     public void start() {
         opmodeTimer.resetTimer();
-        setPathState(46);
+        setPathState(1);
     }
 
     @Override
