@@ -45,6 +45,12 @@ public class Shooterv2 {
         flywheel.setVelocity(flyWheelTarget);
     }
 
+    public void spinUp(double speed) {
+        flywheel.setVelocity(speed);
+    }
+
+
+
     public void spinDown() {
         flywheel.setVelocity(0);
     }

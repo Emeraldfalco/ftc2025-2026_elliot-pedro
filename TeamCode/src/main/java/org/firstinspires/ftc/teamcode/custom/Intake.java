@@ -40,7 +40,7 @@ public class Intake {
 
 
     public void reject(){
-        intakeMot.setPower(-0.75);
+        intakeMot.setPower(-1);
     }
 
 

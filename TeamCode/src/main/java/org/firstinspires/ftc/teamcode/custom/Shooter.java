@@ -67,6 +67,7 @@ public class Shooter {
         updateTelemetry();
     }
 
+
     public void spinDown() {
         flywheel.setVelocity(0);
         telemetryStatus = "Flywheel spin down";
